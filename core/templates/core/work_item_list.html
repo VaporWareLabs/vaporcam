@@ -1,0 +1,585 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+
+    <div class="dashboard-header">
+       <div class="project-selector-wrapper">
+            <select
+                id="project-selector"
+                class="project-selector"
+                onchange="window.location.href=this.value;">
+
+                {% for p in projects %}
+                    <option
+                        value="{% url 'work_item_list_project' p.slug %}"
+                        {% if current_project and current_project.id == p.id %}selected{% endif %}>
+                        {{ p.name }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <span class="project-selector-caret">▼</span>
+        </div>
+        <label class="show-done-toggle">
+            <input
+                type="checkbox"
+                id="show-done-checkbox"
+                checked>
+            Show Done
+        </label>
+    </div>
+
+    <div class="sheet-wrap">
+        <table id="dashboard-table">
+            <thead class="evms-header">
+                <tr>
+                    <th>CAM</th>
+                    <th>Status</th>
+                    <th>WP / Feature</th>
+                    <th>Subtasks / Story</th>
+                    <th>Assignee</th>
+                    <th>% Complete</th>
+                    <th>Baseline</th>
+                    <th>JIRA SP</th>
+                    <th>ETC</th>
+                    <th>Actuals</th>
+                    <th>EAC</th>
+                    <th>Var</th>
+                    <th>Earned Value</th>
+                    <th>CPI</th>
+                    <th></th>
+                {% for month in months %}
+                    <th>{{ month|date:"M Y" }}</th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in feature_groups %}
+            
+                <tr class="feature-row" data-feature-key="{{ group.feature_key|default:'unassigned' }}">
+                    <td rowspan="3"></td>
+                    <td rowspan="3"></td>
+
+                    <td class="feature-cell" rowspan="3">
+                        <div class="feature-row-content">
+                            <div class="feature-info">
+                                <button class="toggle-feature" type="button">▾</button>
+                    
+                                {% if group.feature_url %}
+                                    <a href="{{ group.feature_url }}" target="_blank">
+                                        {{ group.feature_key }}
+                                    </a>
+                                    {% if group.feature_name %}
+                                        - {{ group.feature_name }}
+                                    {% endif %}
+                                {% else %}
+                                    {{ group.feature_name|default:group.feature }}
+                                {% endif %}
+                            </div> 
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary notes-btn"
+                                data-bs-toggle="tooltip"
+                                data-bs-custom-class="note-tooltip"
+                                data-bs-placement="left"
+                                title="{{ group.note_text|default:'No notes yet'}}"
+                                data-work-item-id="{{ group.work_item_id }}"
+                                data-work-item-key="{{ group.feature_key }}"
+                                data-note="{{ group.note_text|default:''|escape }}">
+                                💬
+                            </button>
+                        </div>
+                    </td>
+                
+                    <td rowspan="3"></td>
+                    <td rowspan="3"></td>
+                    <td class="number" rowspan="3">{{ group.feature_percent_complete|floatformat:-2 }}% ({{ group.feature_completed_stories|floatformat:-2 }} / {{ group.feature_total_stories|floatformat:-2 }})</td>
+                    <td class="feature-baseline-total number" rowspan="3"
+                        data-feature-key="{{ group.feature_key }}"
+                    >
+                        {{ group.baseline_total|floatformat:-2 }}
+                    </td>
+                    <td class="number" rowspan="3">{{ group.budget_total|floatformat:-2 }}</td>
+                    <td class="number" rowspan="3">{{ group.etc_total|floatformat:-2 }}</td>
+                    <td class="number" rowspan="3">{{ group.actual_total|floatformat:-2 }}</td>
+                    <td class="number" rowspan="3">{{ group.eac_total|floatformat:-2 }}</td>
+                    <td class="number" rowspan="3">{{ group.variance_total|floatformat:-2 }}</td>
+                    <td rowspan="3"></td>
+                    <td rowspan="3"></td>
+                    <td>Budget</td>
+                {% for monthly in group.monthly_totals %}
+                    <td class="feature-month-budget number"
+                    >
+                    </td>
+                {% endfor %}
+                </tr>
+
+                <tr class="monthly-etc-row""">
+                    <td>ETC</td>
+                {% for monthly in group.monthly_totals %}
+                    <td class="feature-month-total number"
+                        data-feature-key="{{ group.feature_key }}"
+                        data-month="{{ monthly.month|date:'Y-m-d' }}"
+                    >
+                        {{ monthly.etc|default:0|floatformat:-2 }}
+                    </td>
+                {% endfor %}
+                </tr>
+
+                <tr class="monthly-actuals-row" data-feature-key="{{ group.feature_key|default:'unassigned' }}">
+                    <td>Actuals</td>
+                {% for monthly in group.monthly_totals %}
+                    <td class="number">{{ monthly.actual }}</td>
+                {% endfor %}
+                </tr>
+                
+                {% for item in group.items %}
+                <tr class="story-row" 
+                    data-feature-key="{{ group.feature_key|default:'unassigned' }}"
+                    data-status="{{item.jira_status|lower }}">
+                    <td></td>
+                    <td>{{ item.jira_status|default:"" }}</td>
+                    <td> {{ item.charge_code }} </td>
+                    <td class="story-cell">
+                        {% if item.jira_url %}
+                            <a href="{{ item.jira_url }}" target="_blank">{{ item.jira_key }}</a>
+                            - {{ item.story }}
+                        {% else %}
+                            {{ item.story }}
+                        {% endif %}
+                    </td>
+                    <td class="assignee-cell">{{ item.assignee|default:"" }}</td>
+                    <td class="percent-cell number">{{ item.percent_complete }}%</td>
+                    <td class="baseline-cell number"
+                        data-work-item-id="{{ item.id }}"
+                        data-feature-key="{{ group.feature_key }}"
+                        data-baseline="{{ item.baseline_budget|default_if_none:'0' }}"
+                    >
+                        {{ item.baseline_budget|default_if_none:""|floatformat:-2 }}
+                    </td>
+                    <td class="budget-cell number">{{ item.budget_hours|floatformat:-2 }}</td>
+                    <td class="etc-cell number">{{ item.etc_hours|floatformat:-2 }}</td>
+                    <td class="actual-cell number"></td>
+                    <td class="eac-cell number"></td>
+                    <td class="var-cell number"></td>
+                    <td class="earned-value-cell number"></td>
+                    <td class="cpi-cell number"></td>
+                    <td class="spacer-cell"></td>
+                {% for monthly in item.monthly_display %}
+                    <td class="monthly-etc-cell number"
+                        data-work-item-id="{{ item.id }}"
+                        data-feature-key="{{ group.feature_key }}"
+                        data-month="{{ monthly.month|date:'Y-m-d' }}"
+                        data-value="{{ monthly.etc|default:'0'|floatformat:-2 }}"
+                    >
+                        {{ monthly.etc|default:"0"|floatformat:-2 }}
+                    </td>
+                {% endfor %}
+                </tr>
+                {% endfor %}
+            
+                {% empty %}
+                <tr>
+                    <td colspan="15">No work items yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal fade" id="monthlyEtcModal" tabindex="-1">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+    
+          <div class="modal-header">
+            <h5 class="modal-title">Enter Monthly ETC</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+    
+          <div class="modal-body">
+            <input type="hidden" id="monthlyEtcItemId">
+            <input type="hidden" id="monthlyEtcMonth">
+    
+            <label class="form-label">ETC Hours</label>
+            <input
+              type="number"
+              id="monthlyEtcValue"
+              class="form-control"
+              step="0.25"
+              min="0">
+          </div>
+    
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button type="button" id="saveMonthlyEtcBtn" class="btn btn-primary">
+              Save
+            </button>
+          </div>
+    
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="notesModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 id="notesModalTitle" class="modal-title">Notes</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <input type="hidden" id="noteWorkItemId">
+            <textarea id="noteText" class="form-control" rows="8"></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button id="saveNoteBtn" class="btn btn-primary">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="baselineModal" tabindex="-1">
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+    
+          <div class="modal-header">
+            <h5 class="modal-title">Enter Baseline Budget</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+    
+          <div class="modal-body">
+            <input type="hidden" id="baselineWorkItemId">
+    
+            <label class="form-label">Baseline Budget</label>
+            <input
+              type="number"
+              id="baselineValue"
+              class="form-control"
+              step="0.25"
+              min="0">
+          </div>
+    
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button type="button" id="saveBaselineBtn" class="btn btn-primary">
+              Save
+            </button>
+          </div>
+    
+        </div>
+      </div>
+    </div>
+
+    <script>
+    
+        {% if request.user.is_superuser or is_admin %}
+        const baselineModal = new bootstrap.Modal(
+            document.getElementById("baselineModal")
+        );
+        
+        let activeBaselineCell = null;
+        
+        document.querySelectorAll(".baseline-cell").forEach(cell => {
+            cell.addEventListener("click", function () {
+                activeBaselineCell = this;
+        
+                document.getElementById("baselineWorkItemId").value =
+                    this.dataset.workItemId;
+        
+                document.getElementById("baselineValue").value =
+                    this.dataset.baseline || "0";
+        
+                baselineModal.show();
+                
+                const baselineModalElement =
+                    document.getElementById("baselineModal");
+                
+                baselineModalElement.addEventListener(
+                    "shown.bs.modal",
+                    function () {
+                        const baselineInput = document.getElementById("baselineValue");
+                        baselineInput.focus();
+                        baselineInput.select();
+                    },
+                    { once: true }
+                );
+            });
+        });
+        
+        const baselineInput =
+            document.getElementById("baselineValue");
+        
+        const baselineSubmit =
+            document.getElementById("saveBaselineBtn");
+        
+        baselineInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                baselineSubmit.click();
+            }
+        });
+        
+        document.getElementById("saveBaselineBtn").addEventListener("click", function () {
+            const workItemId = document.getElementById("baselineWorkItemId").value;
+            const newValue = document.getElementById("baselineValue").value;
+        
+            fetch("/baseline/", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: `work_item_id=${encodeURIComponent(workItemId)}&baseline_budget=${encodeURIComponent(newValue)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+            
+                if (data.success) {
+                    activeBaselineCell.textContent = data.baseline_budget;
+                    activeBaselineCell.dataset.baseline = data.baseline_budget;
+                
+                    const featureKey = activeBaselineCell.dataset.featureKey;
+                
+                    let baselineTotal = 0;
+                
+                    document
+                        .querySelectorAll(`.baseline-cell[data-feature-key="${featureKey}"]`)
+                        .forEach(cell => {
+                            baselineTotal += parseFloat(cell.dataset.baseline || "0");
+                        });
+                
+                    const featureBaselineCell = document.querySelector(
+                        `.feature-baseline-total[data-feature-key="${featureKey}"]`
+                    );
+                
+                    if (featureBaselineCell) {
+                        featureBaselineCell.textContent = baselineTotal.toFixed(0);
+                    }
+                
+                    baselineModal.hide();
+                } else {
+                    alert(data.error || "Error saving baseline");
+                }
+            })
+            .catch(error => {
+                alert("Baseline save error");
+            });
+        });
+
+        {%endif %}
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".toggle-feature").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    const featureRow = button.closest(".feature-row");
+                    const featureKey = featureRow.dataset.featureKey;
+        
+                    const storyRows = document.querySelectorAll(
+                        '.story-row[data-feature-key="' + featureKey + '"]'
+                    );
+        
+                    const isExpanded = button.textContent.trim() === "▾";
+        
+                    storyRows.forEach(function (row) {
+                        row.style.display = isExpanded ? "none" : "";
+                    });
+        
+                    button.textContent = isExpanded ? "▸" : "▾";
+                });
+            });
+
+            let activeEtcCell = null;
+            
+            const monthlyEtcModal = new bootstrap.Modal(
+                document.getElementById("monthlyEtcModal")
+            );
+            
+            const etcInput = document.getElementById("monthlyEtcValue");
+            const etcSubmit = document.getElementById("saveMonthlyEtcBtn");
+            
+            etcInput.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    etcSubmit.click();
+                }
+            });
+            
+            document.querySelectorAll(".monthly-etc-cell").forEach(function (cell) {
+                cell.addEventListener("click", function () {
+                    activeEtcCell = cell;
+            
+                    etcInput.value = cell.textContent.trim() || "0";
+            
+                    monthlyEtcModal.show();
+                    
+                    const monthlyEtcModalElement =
+                        document.getElementById("monthlyEtcModal");
+                    
+                    monthlyEtcModalElement.addEventListener(
+                        "shown.bs.modal",
+                        function () {
+                            etcInput.focus();
+                            etcInput.select();
+                        },
+                        { once: true }
+                    );
+
+                });
+            });
+            
+            function recalcRowFromEtcCell(etcCell) {
+                const row = etcCell.closest("tr");
+                if (!row) return;
+            
+                const actualCell = row.querySelector(".actual-cell");
+                const etcTotalCell = row.querySelector(".etc-cell");
+                const eacCell = row.querySelector(".eac-cell");
+                const varianceCell = row.querySelectorAll(".calc-cell")[0];
+            
+                const actual = parseFloat(actualCell?.textContent) || 0;
+                const budget = parseFloat(row.querySelector(".budget-cell")?.textContent) || 0;
+            
+                let etcTotal = 0;
+                row.querySelectorAll(".monthly-etc-cell").forEach(function(cell) {
+                    etcTotal += parseFloat(cell.textContent) || 0;
+                });
+            
+                const eac = actual + etcTotal;
+                const variance = budget - eac;
+            
+                if (etcTotalCell) etcTotalCell.textContent = etcTotal.toFixed(0);
+                if (eacCell) eacCell.textContent = eac.toFixed(0);
+                if (varianceCell) varianceCell.textContent = variance.toFixed(0);
+            }
+
+            etcSubmit.addEventListener("click", function () {
+                if (!activeEtcCell) return;
+
+                const formData = new FormData();
+                formData.append("work_item_id", activeEtcCell.dataset.workItemId);
+                formData.append("month", activeEtcCell.dataset.month);
+                formData.append("etc_hours", etcInput.value);
+                formData.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+                fetch("{% url 'save_monthly_etc' %}", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                
+                        activeEtcCell.textContent = data.etc_hours;
+                        activeEtcCell.dataset.value = data.etc_hours;
+                
+                        recalcRowFromEtcCell(activeEtcCell);
+                
+                        const featureKey = activeEtcCell.dataset.featureKey;
+                        const month = activeEtcCell.dataset.month;
+                
+                        let monthTotal = 0;
+                
+                        document
+                            .querySelectorAll(
+                                `.monthly-etc-cell[data-feature-key="${featureKey}"][data-month="${month}"]`
+                            )
+                            .forEach(cell => {
+                                monthTotal += parseFloat(cell.dataset.value || cell.textContent || "0");
+                            });
+                
+                        const featureMonthCell = document.querySelector(
+                            `.feature-month-total[data-feature-key="${featureKey}"][data-month="${month}"]`
+                        );
+                
+                        if (featureMonthCell) {
+                            featureMonthCell.textContent = monthTotal.toFixed(0);
+                        }
+                
+                        monthlyEtcModal.hide();
+                        activeEtcCell = null;
+                    }
+                });
+            });
+            
+            const tooltipTriggerList =
+                document.querySelectorAll('[data-bs-toggle="tooltip"]');
+
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+        });
+
+        const notesModal = new bootstrap.Modal(
+            document.getElementById("notesModal")
+        );
+
+        document.querySelectorAll(".notes-btn").forEach(btn => {
+            btn.addEventListener("click", function () {
+
+                document.getElementById("noteWorkItemId").value =
+                    this.dataset.workItemId;
+
+                document.getElementById("noteText").value =
+                    this.dataset.note || "";
+
+                document.getElementById("notesModalTitle").innerText =
+                    "Notes - " + this.dataset.workItemKey;
+
+                notesModal.show();
+
+            });
+        });
+
+        document.getElementById("saveNoteBtn").addEventListener("click", function () {
+            fetch("{% url 'save_note' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body:
+                    "work_item_id=" + encodeURIComponent(
+                        document.getElementById("noteWorkItemId").value
+                    ) +
+                    "&note_text=" + encodeURIComponent(
+                        document.getElementById("noteText").value
+                    )
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    notesModal.hide();
+                    location.reload();
+                }
+            });
+        });
+        
+        const showDoneCheckbox = document.getElementById("show-done-checkbox");
+        
+        function applyShowDoneFilter() {
+            const showDone = showDoneCheckbox.checked;
+        
+            document.querySelectorAll(".story-row").forEach(function (row) {
+                const status = row.dataset.status || "";
+        
+                if (status === "done" || status === "void") {
+                    row.style.display = showDone ? "" : "none";
+                }
+            });
+        }
+        
+        showDoneCheckbox.addEventListener("change", applyShowDoneFilter);
+        applyShowDoneFilter();
+        
+    </script>
+
+{% endblock %}

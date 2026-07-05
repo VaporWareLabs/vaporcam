@@ -1,0 +1,44 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+
+    <div class="login-page">
+    
+        <div class="login-card">
+    
+            <h1>VaporCAM</h1>
+            <p class="login-subtitle">
+                Project Controls Dashboard
+            </p>
+    
+            {% if form.errors %}
+            <div class="login-error">
+                Invalid username or password.
+            </div>
+            {% endif %}
+    
+            <form method="post">
+                {% csrf_token %}
+    
+                <div class="login-field">
+                    <label for="id_username">Username</label>
+                    {{ form.username }}
+                </div>
+    
+                <div class="login-field">
+                    <label for="id_password">Password</label>
+                    {{ form.password }}
+                </div>
+    
+                <button class="login-button" type="submit">
+                    Login
+                </button>
+    
+            </form>
+    
+        </div>
+    
+    </div>
+
+{% endblock %}
+

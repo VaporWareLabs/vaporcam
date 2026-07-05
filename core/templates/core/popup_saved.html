@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Saved</title>
+</head>
+<body>
+    <p>Saved. Closing window...</p>
+
+    <script>
+        if (window.opener) {
+            window.opener.location.reload();
+        }
+        window.close();
+    </script>
+</body>
+</html>
+

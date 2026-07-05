@@ -1,0 +1,809 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VaporCAM</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'core/vaporcam_favicon.ico' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --vc-navy: #1f4e78;
+            --vc-navy-dark: #003366;
+            --vc-blue: #d9eaf7;
+            --vc-blue-header: #d9e2f3;
+            --vc-green: #d9ead3;
+            --vc-green-border: #8ea98e;
+            --vc-yellow: #fff2cc;
+            --vc-orange: #f1a983;
+            --vc-orange-soft: #fce4d6;
+			--vc-light-peach: #fbe2d5;
+            --vc-light-pink: #f2ceef;
+			--vc-gold: #ffc000;
+            --vc-gray: #b7b7b7;
+			--vc-dark-charcoal: #212529;
+            --vc-bg: #e9edf2;
+            --vc-grid: #d8d8d8;
+            --vc-panel-border: #cfd8e3;
+            --vc-hover: #f2f7ff;
+        }
+
+        .actual-cell {
+            background: var(--vc-dark-charcoal);
+            text-align: right;
+        }
+        .assignee-cell {
+            background: var(--vc-blue);
+            text-align: center;
+        }
+        .baseline-cell {
+            background: var(--vc-orange);
+            text-align: right;
+        }
+        .baseline-cell:hover {
+            cursor: pointer;
+            background-color: var(--vc-hover);
+        }
+        body {
+            font-family: Aptos, Arial, sans-serif;
+            margin: 0;
+            background: var(--vc-bg);
+            font-size: 13px;
+        }
+        .brand {
+            font-weight: 700;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        .brand:hover {
+            background-color: transparent !important;
+            color: white;
+            text-decoration: none;
+        }
+        .budget-cell {
+            background: var(--vc-blue-header);
+            text-align: right;
+        }
+        .calc-cell {
+            background: var(--vc-orange);
+            text-align: right;
+        }
+        .center {
+            text-align: center;
+        }
+        .content {
+            padding: 12px;
+        }
+        .cpi-cell {
+            background: var(--vc-dark-charcoal);
+            text-align: right;
+            font-weight: 700;
+        }
+		.dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .eac-cell {
+            background: var(--vc-dark-charcoal);
+            text-align: right;
+            font-weight: 700;
+        }
+        .earned-value-cell {
+            background: var(--vc-dark-charcoal);
+            text-align: right;
+            font-weight: 700;
+        }
+		.etc-cell {
+            background: var(--vc-gold);
+            text-align: right;
+            font-weight: 700;
+        }
+        .evms-header th {
+            background-color: #D9D9D9;
+            color: #000;
+            font-weight: 700;
+            border: 1px solid #B7B7B7;
+            padding: 4px 6px;
+        }
+        .feature-row td {
+            background-color: #B7B7B7;
+            font-weight: 600;
+            border-top: 2px solid #6B6B6B;
+            border-bottom: 2px solid #6B6B6B;
+        }
+        .feature-row-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .feature-info {
+            flex: 1;
+        }
+        .footer {
+            background: #20384f;
+            color: white;
+            height: 36px;
+            line-height: 36px;
+            text-align: center;
+            font-size: 12px;
+            margin-top: 12px;
+            border-top: 1px solid #365a7a;
+        }
+        h1 {
+            margin-bottom: 12px;
+        }
+        .header {
+            background: #003366;
+            color: white;
+            padding: 10px;
+        }
+        .header a {
+            color: white;
+            margin-right: 15px;
+            text-decoration: none;
+        }
+        .header-right {
+            float: right;
+        }
+        .loading-box {
+           background: white;
+           padding: 28px 34px;
+           border-radius: 8px;
+           min-width: 240px;
+           text-align: center;
+           box-shadow: 0 4px 20px rgba(0,0,0,.2);
+        }
+        .loading-overlay {
+           display: none;
+           position: fixed;
+           inset: 0;
+           background: rgba(233, 237, 242, 0.75);
+           z-index: 10000;
+           justify-content: center;
+           align-items: center;
+        }
+        .login-button {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            background: #20384f;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .login-button:hover {
+            background: #305170;
+        }
+        .login-card {
+            width: 420px;
+            background: white;
+            border: 1px solid #cfd8e3;
+            border-radius: 8px;
+            padding: 35px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+        }
+        .login-card h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #20384f;
+            font-size: 36px;
+        }
+        .login-error {
+            background: #f8d7da;
+            color: #842029;
+            border: 1px solid #f5c2c7;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .login-field {
+            margin-bottom: 20px;
+        }
+        .login-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #333;
+        }
+        .login-field input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid #b8c2cc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .login-field input:focus {
+            outline: none;
+            border-color: var(--vc-navy);
+            box-shadow: 0 0 4px rgba(31,78,120,0.25);
+        }
+        .login-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 160px);
+        }
+        .login-subtitle {
+            text-align: center;
+            color: #666;
+            margin-top: -10px;
+            margin-bottom: 25px;
+        }
+        .loading-title {
+           font-size: 20px;
+           font-weight: 700;
+           color: var(--vc-navy);
+        }
+        .loading-text {
+           color: #666;
+           margin-top: 6px;
+        }
+        .logout-button {
+            font-size: 12px;
+            padding: 2px 8px;
+        }
+        .monthly-actuals-row td {
+            background: var(--vc-green);
+            font-weight: 500;
+            border-top: 1px solid var(--vc-green-border);
+            border-bottom: 1px solid var(--vc-green-border);
+        }
+        .monthly-actuals-row:hover {
+            background-color: #ffffff;
+        }
+        .monthly-etc-cell {
+            cursor: pointer;
+        }
+        .monthly-etc-cell:hover {
+            background-color: var(--vc-hover);
+        }
+        .monthly-etc-row td {
+            background: var(--vc-light-pink);
+            font-weight: 500;
+            border-top: 1px solid var(--vc-green-border);
+            border-bottom: 1px solid var(--vc-green-border);
+        }
+        .muted {
+            color: #666;
+        }
+        .nav-search {
+            padding: 3px 6px;
+            font-size: 12px;
+            min-width: 220px;
+        }
+        .notes-btn {
+             border: 1px solid #adb5bd;
+             border-radius: 4px;
+             font-size: 20px;
+             padding: 2px 6px;
+             margin-left:10px;
+        }
+        .note-tooltip .tooltip-inner {
+            background-color: white;
+            white-space: pre-wrap;
+            color: black;
+            border: 1px solid #c0c0c0;
+            box-shadow: 0 2px 6px rgba(0,0,0,.15);
+            text-align: left;
+            max-width: 300px;
+        }
+        .note-tooltip .tooltip-arrow::before {
+            border-left-color: white !important;
+            border-right-color: white !important;
+            border-top-color: white !important;
+            border-bottom-color: white !important;
+        }
+        .number {
+            text-align: center;
+        }
+        .password-modal {
+            max-width: 520px;
+        }
+        .password-card {
+            border-radius: 8px;
+            padding: 24px;
+        }
+        .password-title {
+            font-size: 42px;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+        .password-subtitle {
+            font-size: 16px;
+            margin-bottom: 0;
+        }
+        .password-body {
+            padding-top: 10px;
+        }
+        .password-field {
+            margin-bottom: 18px;
+        }
+        .password-field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .password-field input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #777;
+            border-radius: 4px;
+            font-size: 15px;
+        }
+        .password-help {
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .password-footer {
+            justify-content: space-between;
+        }
+        .password-footer .btn {
+            min-width: 120px;
+        }
+        .percent-cell {
+            background: var(--vc-light-peach);
+            text-align: center;
+        }
+        .phase-row td {
+            background: var(--vc-gold);
+            font-weight: 700;
+        }
+        .popup-actions {
+           display: flex;
+           justify-content: flex-end;
+           gap: 8px;
+        }
+        .popup-box {
+           background: white;
+           padding: 20px;
+           border: 1px solid #777;
+           min-width: 280px;
+           box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+        .popup-box input {
+           width: 100%;
+           margin: 10px 0;
+        }
+        .popup-overlay {
+           position: fixed;
+           inset: 0;
+           background: rgba(0,0,0,0.35);
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           z-index: 9999;
+        }       
+        .project-selector-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .project-selector {
+            font-size: 36px;
+            font-weight: 300;
+            color: #212529;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            cursor: pointer;
+            padding: 2px 30px 2px 4px;   /* Leave room for the caret */
+        }
+        .project-selector:focus {
+            outline: none;
+        }
+        .project-selector option {
+            font-size: 18px;
+            background: transparent;    /* Same dark VaporCAM blue */
+            color: #212529;
+        }
+        .project-selector-caret {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+
+            pointer-events: none;
+
+            color: #666;
+            font-size: 12px;
+        }
+        .sheet-wrap {
+            overflow: auto;
+            border: 1px solid var(--vc-grid);
+            background: white;
+            max-height: 80vh;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .show-done-toggle {
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .show-done-toggle input {
+            margin-right: 6px;
+        }
+        .spacer-cell {
+            background: var(--vc-dark-charcoal);
+            text-align: right;
+            font-weight: 700;
+        }
+        .spinner {
+           width: 38px;
+           height: 38px;
+           margin: 0 auto 12px auto;
+           border: 4px solid #d6dce3;
+           border-top: 4px solid #20384f;
+           border-radius: 50%;
+           animation: spin 0.8s linear infinite;
+        }
+        .sticky-cam {
+           position: sticky;
+           left: 0;
+           background: white;
+           z-index: 10;
+        }
+        .sticky-status {
+           position: sticky;
+           left: 43px;
+           background: white;
+           z-index: 10;
+        }
+        .sticky-feature {
+           position: sticky;
+           left: 0;
+           min-width:420px;
+           width: 420px;
+           background: inherit;
+           z-index: 20;
+           box-shadow: 2px 0 3px rgba(0,0,0, 0.15);
+        }
+        .story-cell {
+            background: var(--vc-blue);
+        }
+        table {
+            border-collapse: collapse;
+            min-width: 1400px;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid var(--vc-grid);
+            padding: 4px 4px;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: var(--vc-blue-header);
+            color: #111;
+            text-align: center;
+            font-weight: 700;
+        }
+        .top-nav {
+            background: linear-gradient(90deg, var(--vc-navy-dark), var(--vc-navy));
+            color: white;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.18);
+        }
+        .top-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .top-nav a:hover {
+            background: var(--vc-navy-dark);
+        }
+        .top-nav-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .top-nav-right .dropdown-header {
+            color: #555;
+            font-size: 0.8rem;
+        }
+        .top-nav-right .dropdown-item {
+            color: #222;
+        }
+        .top-nav-right .dropdown-menu form {
+            margin: 0;
+        }
+        .top-nav-right .dropdown-item:hover,
+        .top-nav-right .dropdown-item:focus,
+        .top-nav-right .dropdown-item:active {
+             background-color: var(--vc-navy);
+             color:white !important;
+        }
+        
+        .top-nav-right .dropdown-menu {
+            background-color: white;
+            color: #222;
+            min-width: 240px;
+        }
+        .top-nav-right .dropdown-toggle {
+            color: white;
+            text-decoration: none;
+            padding: 6px 10px;
+        }
+        .top-nav-right .dropdown-toggle:hover,
+        .top-nav-right .dropdown-toggle:focus {
+            color: white;
+            background-color: var(--vc-navy-dark);
+        }
+        .toggle-feature {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 4px;
+        }
+		.var-cell {
+            background: var(--vc-dark-charcoal);
+            text-align: right;
+            font-weight: 700;
+        }
+       @keyframes spin {
+           to {
+               transform: rotate(360deg);
+           }
+       }
+    </style>
+</head>
+<body>
+
+{% if request.user.is_authenticated %}
+
+<div class="top-nav">
+    <a href="https://vaporwarelabs.org"
+       class="brand"
+       target="_blank">VaporCAM</a>
+
+    <a href="{% url 'work_item_list' %}">Dashboard</a>
+
+    <a href="{% url 'export_excel' %}"
+      class="nav-button"
+      id="export-current-view"
+      onclick="showLoadingOverlay('Exporting Excel...'); setTimeout(hideLoadingOverlay, 1500);">
+        Export Excel
+    </a>
+
+    {% if request.user.is_staff %}
+        <a href="{% url 'user_list' %}">Users</a>
+        <a href="{% url 'audit_log' %}">Audit Log</a>
+    {% endif %}
+
+    <div class="top-nav-right">
+        <input
+            id="dashboard-search"
+            class="nav-search"
+            type="search"
+            placeholder="Search dashboard..."
+            oninput="filterDashboardRows()"
+        />
+        {% if request.user.is_authenticated %}
+        <div class="dropdown">
+            <a
+                href="#"
+                class="nav-link dropdown-toggle"
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
+        
+                {{ request.user.username }}
+            </a>
+        
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <h6 class="dropdown-header">
+                        Signed in as {{ request.user.username }}
+                    </h6>
+                </li>
+        
+                <li><hr class="dropdown-divider"></li>
+        
+                <li>
+                    <a class="dropdown-item"
+                      href="{% url 'password_change' %}">
+                        Change Password
+                    </a>
+                </li>
+        
+                <li>
+                    <a class="dropdown-item"
+                      href="#"
+                      onclick="document.getElementById('logout-form').submit(); return false;">
+                        Logout
+                    </a>
+                
+                    <form id="logout-form"
+                          method="post"
+                          action="{% url 'logout' %}"
+                          style="display:none;">
+                        {% csrf_token %}
+                    </form>
+                </li>
+        
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="content">
+    {% block content %}
+    {% endblock %}
+</div>
+
+{% if request.user.is_authenticated %}
+<div class="footer">
+    VaporCAM v0.5-alpha
+</div>
+{% endif %}
+
+<script>
+
+    function filterDashboardRows() {
+        const input = document.getElementById("dashboard-search");
+        const table = document.getElementById("dashboard-table");
+
+        if (!input || !table) return;
+
+        const searchText = input.value.toLowerCase().trim();
+        const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+        if (!searchText) {
+            rows.forEach(row => row.style.display = "");
+            return;
+        }
+
+        let currentGroupRows = [];
+        let currentGroupMatches = false;
+
+        function flushGroup() {
+            if (!currentGroupRows.length) return;
+
+            currentGroupRows.forEach(row => {
+                row.style.display = currentGroupMatches ? "" : "none";
+            });
+        }
+
+        rows.forEach(row => {
+            const isFeatureRow = row.classList.contains("feature-row");
+
+            if (isFeatureRow) {
+                flushGroup();
+                currentGroupRows = [row];
+                currentGroupMatches =
+                    row.innerText.toLowerCase().includes(searchText);
+                return;
+            }
+
+            currentGroupRows.push(row);
+
+            if (row.innerText.toLowerCase().includes(searchText)) {
+                currentGroupMatches = true;
+            }
+        });
+
+        flushGroup();
+    }
+
+    
+    document.addEventListener("DOMContentLoaded", function() {
+    
+        const searchBox = document.getElementById("dashboard-search");
+    
+        if (searchBox) {
+            searchBox.addEventListener("input", filterDashboardRows);
+        }
+    });
+
+    function showLoadingOverlay(message) {
+        const overlay = document.getElementById("loading-overlay");
+        const text = document.querySelector(".loading-text");
+    
+        if (text && message) {
+            text.innerText = message;
+        }
+    
+        if (overlay) {
+            overlay.style.display = "flex";
+        }
+    }
+    
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("a").forEach(function (link) {
+            link.addEventListener("click", function () {
+                const href = link.getAttribute("href");
+    
+                if (link.target === "_blank") {
+                     return;
+                }
+
+                if (!href || href.startsWith("#") || href.startsWith("javascript:")) {
+                    return;
+                }
+    
+                showLoadingOverlay("Loading...");
+            });
+        });
+    
+        document.querySelectorAll("form").forEach(function (form) {
+            form.addEventListener("submit", function () {
+                showLoadingOverlay("Loading...");
+            });
+        });
+    });
+
+    function hideLoadingOverlay() {
+        const overlay = document.getElementById("loading-overlay");
+    
+        if (overlay) {
+            overlay.style.display = "none";
+        }
+    }
+
+    window.addEventListener("pageshow", function() {
+        hideLoadingOverlay();
+    });
+    
+    function exportCurrentViewToExcel() {
+        const table = document.getElementById("dashboard-table");
+        if (!table) {
+            hideLoadingOverlay();
+            return;
+        }
+    
+        const clonedTable = table.cloneNode(true);
+    
+        clonedTable.querySelectorAll("tbody tr").forEach(function(row) {
+            const style = window.getComputedStyle(row);
+    
+            if (style.display === "none" || row.hidden) {
+                row.remove();
+            }
+        });
+    
+        const workbook = XLSX.utils.table_to_book(clonedTable, {
+            sheet: "vaporCAM View"
+        });
+    
+        const today = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(workbook, "vaporCAM_current_view_" + today + ".xlsx");
+    
+        setTimeout(hideLoadingOverlay, 500);
+    }
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <div class="loading-title">VaporCAM</div>
+        <div class="loading-text">Loading...</div>
+    </div>
+</div>
+
+
+</body>
+</html>
+

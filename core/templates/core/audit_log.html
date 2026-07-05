@@ -1,0 +1,36 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+
+<h1>Audit Log</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Changed At</th>
+            <th>Changed By</th>
+            <th>Work Item</th>
+            <th>Month</th>
+            <th>Old ETC</th>
+            <th>New ETC</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for change in changes %}
+        <tr>
+            <td>{{ change.changed_at }}</td>
+            <td>{{ change.changed_by.email }}</td>
+            <td>{{ change.work_item }}</td>
+            <td>{{ change.month|date:"M Y" }}</td>
+            <td>{{ change.old_etc_hours }}</td>
+            <td>{{ change.new_etc_hours }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No audit records yet.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
